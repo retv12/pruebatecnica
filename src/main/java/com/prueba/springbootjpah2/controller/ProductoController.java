@@ -1,18 +1,15 @@
 package com.prueba.springbootjpah2.controller;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,7 +46,7 @@ public class ProductoController {
     public ResponseEntity<List<Producto>> getAllProductofind(@RequestBody ProductoDto data) {
         Date FechaInicio = removeTime(data.getFECHA());
         Date FechaFIN = addTime(data.getFECHA());
-        Integer HoraDia = getHour(data.getFECHA());
+        Integer HoraDia = getHour(data.getFECHA()) + 5;
 
         List<Producto> producto = new ArrayList<Producto>();
 
@@ -59,6 +56,16 @@ public class ProductoController {
                 FechaInicio,
                 FechaFIN)
                 .forEach(producto::add);
+
+        for (int i = 0; i < producto.size(); i++) {
+
+            Integer num1 = getHour(producto.get(i).getSTARTDATE());
+            Integer num2 = getHour(producto.get(i).getENDDATE());
+            Boolean isInRange = RangoHoras(num1, num2, HoraDia);
+            if (isInRange == true) {
+                System.out.println("Registro " + producto.get(i).getIDREG());
+            }
+        }
 
         if (producto.isEmpty()) {
             return new ResponseEntity<>(producto, HttpStatus.NO_CONTENT);
@@ -88,8 +95,21 @@ public class ProductoController {
     }
 
     private static Integer getHour(Date date) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
-        return calendar.HOUR;
+        SimpleDateFormat formatMinutes = new SimpleDateFormat("HH");
+        String getHours = formatMinutes.format(date);
+        // Revisar configuracion regional de time zone
+        return Integer.valueOf(getHours);
+    }
+
+    private Boolean RangoHoras(Integer Ini, Integer Fin, Integer Evaluar) {
+        Boolean result = false;
+        List<Integer> hora = new ArrayList<Integer>();
+        for (int x = Ini; x < Fin; x++) {
+            hora.add(x);
+        }
+        if (hora.contains(Evaluar)) {
+            result = true;
+        }
+        return result;
     }
 }
