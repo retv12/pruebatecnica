@@ -1,6 +1,8 @@
 package com.prueba.springbootjpah2.controller;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,19 +47,49 @@ public class ProductoController {
 
     @PostMapping("/producto/")
     public ResponseEntity<List<Producto>> getAllProductofind(@RequestBody ProductoDto data) {
-        Boolean error = false;
+        Date FechaInicio = removeTime(data.getFECHA());
+        Date FechaFIN = addTime(data.getFECHA());
+        Integer HoraDia = getHour(data.getFECHA());
 
         List<Producto> producto = new ArrayList<Producto>();
 
         productoRepository.findByProductoid(
                 data.getPRODUCTID(),
                 data.getBRANDID(),
-                data.getFECHA())
+                FechaInicio,
+                FechaFIN)
                 .forEach(producto::add);
+
         if (producto.isEmpty()) {
             return new ResponseEntity<>(producto, HttpStatus.NO_CONTENT);
         }
 
-        return new ResponseEntity<>(productoRepository.findAll(), HttpStatus.OK);
+        return new ResponseEntity<>(producto, HttpStatus.OK);
+    }
+
+    private static Date removeTime(Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
+
+    private static Date addTime(Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.HOUR_OF_DAY, 23);
+        calendar.set(Calendar.MINUTE, 59);
+        calendar.set(Calendar.SECOND, 59);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
+
+    private static Integer getHour(Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        return calendar.HOUR;
     }
 }
