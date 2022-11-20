@@ -31,3 +31,5 @@ http://localhost:8080/api/producto/
 	"fecha": "2020-06-14T10:00:00.000+00:00"
 }
 ```
+
+> Saludos Rodolfo Torrealba
