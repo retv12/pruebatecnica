@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.prueba.springbootjpah2.dto.ProductoDto;
+import com.prueba.springbootjpah2.dto.ProductoSalida;
 import com.prueba.springbootjpah2.model.Producto;
 import com.prueba.springbootjpah2.repository.ProductoRepository;
 
@@ -43,13 +46,15 @@ public class ProductoController {
     }
 
     @PostMapping("/producto/")
-    public ResponseEntity<List<Producto>> getAllProductofind(@RequestBody ProductoDto data) {
+    public ResponseEntity<List<ProductoSalida>> getAllProductofind(@RequestBody ProductoDto data) {
         Date FechaInicio = removeTime(data.getFECHA());
         Date FechaFIN = addTime(data.getFECHA());
         Integer HoraDia = getHour(data.getFECHA()) + 5;
 
         List<Producto> producto = new ArrayList<Producto>();
+        List<ProductoSalida> Salida = new ArrayList<ProductoSalida>();
 
+        // Comsumo Repository Con Query
         productoRepository.findByProductoid(
                 data.getPRODUCTID(),
                 data.getBRANDID(),
@@ -58,20 +63,35 @@ public class ProductoController {
                 .forEach(producto::add);
 
         for (int i = 0; i < producto.size(); i++) {
-
-            Integer num1 = getHour(producto.get(i).getSTARTDATE());
-            Integer num2 = getHour(producto.get(i).getENDDATE());
-            Boolean isInRange = RangoHoras(num1, num2, HoraDia);
-            if (isInRange == true) {
-                System.out.println("Registro " + producto.get(i).getIDREG());
+            Integer Ini = getHour(producto.get(i).getSTARTDATE());
+            Integer Fin = getHour(producto.get(i).getENDDATE());
+            if (RangoHoras(Ini, Fin, HoraDia)) {
+                ProductoSalida item = new ProductoSalida();
+                item.setBRANDID(producto.get(i).getBRANDID());
+                item.setPRODUCTID(producto.get(i).getPRODUCTID());
+                item.setPRICE(producto.get(i).getPRICE());
+                item.setPRICELIST(producto.get(i).getPRICELIST());
+                item.setSTARTDATE(producto.get(i).getSTARTDATE());
+                item.setENDDATE(producto.get(i).getENDDATE());
+                item.setPRIORITY(producto.get(i).getPRIORITY());
+                Salida.add(item);
             }
         }
 
         if (producto.isEmpty()) {
-            return new ResponseEntity<>(producto, HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>(Salida, HttpStatus.NO_CONTENT);
         }
 
-        return new ResponseEntity<>(producto, HttpStatus.OK);
+        System.out.println("Cantidad " + Salida.size());
+
+        // Filtro si tengo mas de un producto
+        if (Salida.size() == 2) {
+            List<ProductoSalida> filteredList = Salida.stream()
+                    .filter(article -> article.getPRIORITY().equals(1)).collect(Collectors.toList());
+            Salida = null;
+            Salida = filteredList;
+        }
+        return new ResponseEntity<>(Salida, HttpStatus.OK);
     }
 
     private static Date removeTime(Date date) {
